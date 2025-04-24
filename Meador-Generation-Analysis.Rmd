@@ -1,0 +1,52 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+#The data I'm working with is from a set of files from Energy Information Administration called "SEP Tables for IN": https://indiana-my.sharepoint.com/:x:/g/personal/marnmead_iu_edu/EWVVMOXz4HJJm-jPHmacmUAByQvQE3EoAU6QTWqrMIpIJw?e=HSq3Yf. The specific file I'm using is "Table 5. Electric power industry generation by primary energy source, 1990 through 2023" which sources from U.S. Energy Information Administration, Form EIA-923, Power Plant Operations Report and predecessor forms.																												
+```{r}
+df <- read.csv('generation(5.csv')
+```
+
+```{r}
+library(dplyr)
+library(stringr)
+library(tidyverse)
+```
+
+#I'm going to remove the sub columns so I only get the total for each category. I'm also removing the "other gas" category because it doesn't appear to be a significant source of energy. It's missing from the last decade of data, so I assume it's not used anymore.
+
+```{r}
+df2 <- df[c(2,3,4,5,10,11,13,18),]
+```
+
+#Next I'm selecting out the percent share columns. I had to do this one by one for some reason, perhaps because I chose to overwrite the dataframe rather than creating a new one. 
+
+```{r}
+df2 <- df2 %>%
+select(-Percent.share.2000, Percent.share.2010, Percent.share.2020, Percent.share.2023)
+```
+
+#I want the years to be in one column
+
+```{r}
+df_long <- df2 %>%
+  pivot_longer(cols = starts_with("Year."),
+               names_to = "Year",
+               values_to = "Value") %>%
+  mutate(Year = sub("Year\\.", "", Year))
+
+```
+
+#Then I'll pivot_wider to make each category row a column.
+
+```{r}
+df_clean <- df_long %>%
+    pivot_wider(names_from = X, values_from = Value)
+```
+
+
+```{r}
+write.csv(df_clean, 'generation_by_source.csv')
+```
+
+#Flourish: https://public.flourish.studio/visualisation/22526856/
