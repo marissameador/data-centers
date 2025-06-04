@@ -1,0 +1,49 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+#The data I'm using is from the "Table 8. Sales to ultimate customers, revenue, and average price by sector, 1990 through 2023" file of the SEP Tables for IN. That data is sourced from the U.S. Energy Information Administration, Form EIA-861, Annual Electric Power Industry Report. Link: https://indiana-my.sharepoint.com/:x:/g/personal/marnmead_iu_edu/EWVVMOXz4HJJm-jPHmacmUAByQvQE3EoAU6QTWqrMIpIJw?e=ygOc1i	
+
+#Before I read in the file, I removed all of the rows except the bottom seven in Excel because I was only interested in analyzing the price per unit for each category of customer.
+
+```{r}
+df_sales <- read.csv(sales.csv)
+```
+
+#I'm removing unncessary columns
+```{r}
+df_sales_clean <- df_sales %>%
+select(-X, -X.1, -X.2)
+```
+
+
+#I'm removing the word "Year." from the years.
+```{r}
+df_sales_cleaner <- df_sales_clean %>%
+  rename_with(~gsub("^Year\\.", "", .), starts_with("Year."))
+  
+```
+
+#I'm making each year column go under one column called "Year" and putting the values in a new column called "Value"
+```{r}
+df_sales_long <- df_sales_cleaner %>%
+  pivot_longer(cols = c(`1990`:`2023`), names_to="Year", values_to="Value")
+```
+
+#I'm turning the average price column into rows
+```{r}
+df_sales_wide <- df_sales_long %>%
+  pivot_wider(names_from=Average.price.to.ultimate.customers..cents.kWh., values_from=Value)
+```
+
+#Finally I'm removing categories that I don't need for my analysis. I'm just looking at the three major customer categories for utilities: residential, commercial and indsutrial.
+```{r}
+df_sales_final <- df_sales_wide %>%
+  select(-Transportation, -Other, -Total)
+```
+
+```{r}
+write.csv(df_sales_final, 'sales_final.csv')
+```
+
+#Flourish graphic: https://public.flourish.studio/visualisation/22608915/
